@@ -1,1 +1,3 @@
-/domain-service/venv/
+/*/venv/
+/*/.venv/
+/*/.idea
