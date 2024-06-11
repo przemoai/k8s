@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: domain-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: domain-service
+  template:
+    metadata:
+      labels:
+        app: domain-service
+    spec:
+      containers:
+      - name: domain-service
+        image: domain-service:1.0.0
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: domain-service
+spec:
+  selector:
+    app: domain-service
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
