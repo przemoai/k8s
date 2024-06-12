@@ -9,10 +9,10 @@ spec:
   - host: domain-service.local
     http:
       paths:
-      - path: /
+      - path: /backend
         pathType: Prefix
         backend:
           service:
             name: domain-service
             port:
-              number: 8000
+              number: 80
