@@ -1,12 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
 from enum import StrEnum
+from typing import Any
+
+from starlette.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 import uvicorn
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from fastapi import FastAPI
 from pydantic import BaseModel
-from models import Task, Task_Pydantic
+from models import Task_Pydantic, Task
 
 conf = {
     "bootstrap.servers": "localhost:9092",
@@ -28,6 +31,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+origins = [
+    "http://localhost:4200",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["*"],
+)
+
+
 register_tortoise(
     app,
     db_url="postgres://postgres:password@localhost:5432/mydatabase",
@@ -37,7 +52,7 @@ register_tortoise(
 )
 
 
-@app.get("/tasks")
+@app.get("/tasks/")
 async def get_tasks():
     tasks = await Task_Pydantic.from_queryset(Task.all())
     return tasks
@@ -50,27 +65,32 @@ class Action(StrEnum):
 
 class Event(BaseModel):
     action: Action
-    task: str
+    task: Task_Pydantic
 
 
-async def process_event(event: Event):
-    if event.action == Action.ADD:
-        task = Task(description=event.task)
+async def process_event(event: dict[str, Any]):
+    if event["action"] == Action.ADD:
+        description = event["task"]
+        task = Task(description=description)
         await task.save()
+        return "saved"
 
-    elif event.action == Action.REMOVE:
-        task = await Task.filter(description=event.task).first()
+    elif event["action"] == Action.REMOVE:
+        id = event["task"]["id"]
+
+        task = await Task.filter(id=id).first()
         if task:
             await task.delete()
-
+        return "deleted"
 
 async def basic_consume_loop(consumer, topics):
-    try:
-        consumer.subscribe(topics)
+    consumer.subscribe(topics)
 
+    try:
         while True:
             await asyncio.sleep(0.1)
-            msg = consumer.poll(timeout=1.0)
+            msg = consumer.poll(timeout=1)
+            print(".")
             if msg is None:
                 continue
 
@@ -81,10 +101,14 @@ async def basic_consume_loop(consumer, topics):
                     raise KafkaException(msg.error())
             else:
                 print("New message!")
-                event = Event.parse_raw(msg.value().decode())
-                await process_event(event)
+                try:
+                    event = eval(msg.value().decode())
+                    x = await process_event(event)
+                except Exception:
+                    print("Error processing")
     except Exception as e:
         print(f"Error in consumer loop: {e}")
+
     finally:
         consumer.close()
 
