@@ -1,0 +1,4 @@
+fastapi
+confluent-kafka
+asyncpg
+tortoise-orm

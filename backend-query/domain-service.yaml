@@ -13,7 +13,7 @@ spec:
         app: domain-service
     spec:
       containers:
-      - name: domain-service
+      - name: backend-query
         image: domain-service:1.0.0
         ports:
         - containerPort: 8000
