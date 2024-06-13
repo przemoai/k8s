@@ -13,7 +13,7 @@ from .model import Task_Pydantic, Task
 
 conf = {
     "bootstrap.servers": "kafka-cluster.default.svc.cluster.local:9092",
-    "group.id": "task-group"
+    "group.id": "task-group",
 }
 
 TOPIC = "task-events"
@@ -82,6 +82,7 @@ async def process_event(event: dict[str, Any]):
             await task.delete()
         return "deleted"
 
+
 async def basic_consume_loop(consumer, topics):
     consumer.subscribe(topics)
 
@@ -101,7 +102,7 @@ async def basic_consume_loop(consumer, topics):
                 print("New message!")
                 try:
                     event = eval(msg.value().decode())
-                    x = await process_event(event)
+                    _ = await process_event(event)
                 except Exception:
                     print("Error processing")
     except Exception as e:
