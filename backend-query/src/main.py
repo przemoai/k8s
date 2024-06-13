@@ -10,11 +10,7 @@ import uvicorn
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from fastapi import FastAPI
 from pydantic import BaseModel
-from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator
-from src.models import Task_Pydantic, Task
-
-
+from .model import TaskIn_Pydantic, Task, Task_Pydantic
 
 conf = {
     "bootstrap.servers": "kafka-cluster.default.svc.cluster.local:9092",
@@ -44,7 +40,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET,POST,DELETE"],
     allow_headers=["*"],
-    expose_headers=["*"]
+    expose_headers=["*"],
 )
 
 
