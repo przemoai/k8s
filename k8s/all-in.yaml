@@ -80,7 +80,7 @@ spec:
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: zookeeper:2181
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: PLAINTEXT://kafka:9092
+              value: PLAINTEXT://kafka-cluster.default.svc.cluster.local:9092
             - name: KAFKA_LISTENERS
               value: PLAINTEXT://0.0.0.0:9092
             - name: KAFKA_BROKER_ID
@@ -94,10 +94,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka
+  name: kafka-cluster
 spec:
   selector:
-    app: kafka
+    app: kafka-cluster
   ports:
     - protocol: TCP
       port: 9092
@@ -251,31 +251,30 @@ metadata:
   name: domain-ingress
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   rules:
     - host: todo.local
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: todo-ui
-                port:
-                  number: 80
-          - path: /query(/|$)(.*)
+          - path: /query/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: backend-query
                 port:
                   number: 80
-          - path: /command(/|$)(.*)
+          - path: /command/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: backend-command
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: todo-ui
                 port:
                   number: 80

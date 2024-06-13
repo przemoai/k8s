@@ -7,8 +7,7 @@ from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
-
-conf = {"bootstrap.servers": "PLAINTEXT://localhost:9092"}
+conf = {"bootstrap.servers": "PLAINTEXT://kafka-cluster.default.svc.cluster.local:9092"}
 producer = Producer(conf)
 
 TOPIC = "task-events"
@@ -17,6 +16,9 @@ app = FastAPI()
 
 origins = [
     "http://localhost:4200",
+    "http://todo.local:80",
+    "http://todo.local",
+    "http://todo-ui.default.svc.cluster.local"
 ]
 app.add_middleware(
     CORSMiddleware,

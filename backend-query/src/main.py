@@ -12,20 +12,12 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
+from models import Task_Pydantic, Task
 
-
-class Task(models.Model):
-    id = fields.IntField(pk=True)
-    description = fields.CharField(max_length=255)
-    created_at = fields.DatetimeField(auto_now_add=True)
-
-
-Task_Pydantic = pydantic_model_creator(Task, name="Task")
-TaskIn_Pydantic = pydantic_model_creator(Task, name="TaskIn", exclude_readonly=True)
 
 
 conf = {
-    "bootstrap.servers": "localhost:9092",
+    "bootstrap.servers": "kafka-cluster.default.svc.cluster.local:9092",
     "group.id": "task-group",
     "auto.offset.reset": "earliest",
 }
@@ -46,6 +38,9 @@ app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:4200",
+    "http://todo.local:80",
+    "http://todo.local",
+    "http://todo-ui.default.svc.cluster.local"
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +53,7 @@ app.add_middleware(
 
 register_tortoise(
     app,
-    db_url="postgres://postgres:password@postgres.default.svc.cluster.local:5432/mydatabase",
+    db_url="postgres://postgres.default.svc.cluster.local:5432/mydatabase",
     modules={"models": ["__main__"]},  # Ensure models are referenced correctly
     generate_schemas=True,
     add_exception_handlers=True,
