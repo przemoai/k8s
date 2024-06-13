@@ -27,15 +27,14 @@ Upload dockers
 ```bash
 docker image pull wurstmeister/zookeeper:3.4.6
 docker image pull wurstmeister/kafka:2.12-2.5.0
+docker image pull postgres:13
 
 minikube image load backend-command:1.0.0
 minikube image load backend-query:1.0.0
 minikube image load todo-ui:1.0.0
 minikube image load wurstmeister/zookeeper:3.4.6
 minikube image load wurstmeister/kafka:2.12-2.5.0
-minikube image load backend-command:1.0.0
-minikube image load backend-query:1.0.0
-minikube image load todo-ui-query:1.0.0
+minikube image load postgres
 ```
 
 

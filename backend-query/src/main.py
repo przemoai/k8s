@@ -58,7 +58,7 @@ app.add_middleware(
 
 register_tortoise(
     app,
-    db_url="postgres://postgres:password@localhost:5432/mydatabase",
+    db_url="postgres://postgres:password@postgres.default.svc.cluster.local:5432/mydatabase",
     modules={"models": ["__main__"]},  # Ensure models are referenced correctly
     generate_schemas=True,
     add_exception_handlers=True,

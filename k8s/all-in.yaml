@@ -1,33 +1,109 @@
+# Persistent Volume Claim for Postgres
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Postgres Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka
+  name: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka
+      app: postgres
   template:
     metadata:
       labels:
-        app: kafka
+        app: postgres
     spec:
       containers:
-      - name: kafka
-        image: wurstmeister/kafka:2.12-2.5.0
-        env:
-        - name: KAFKA_ZOOKEEPER_CONNECT
-          value: zookeeper:2181
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: PLAINTEXT://kafka:9092
-        - name: KAFKA_LISTENERS
-          value: PLAINTEXT://0.0.0.0:9092
-        - name: KAFKA_BROKER_ID
-          value: "1"
-        ports:
-        - containerPort: 9092
-
+        - name: postgres
+          image: postgres:13
+          env:
+            - name: POSTGRES_DB
+              value: "mydatabase"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "password"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
 ---
+# Postgres Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+# Kafka Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-cluster
+  template:
+    metadata:
+      labels:
+        app: kafka-cluster
+    spec:
+      containers:
+        - name: kafka-cluster
+          image: wurstmeister/kafka:2.12-2.5.0
+          env:
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: zookeeper:2181
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka:9092
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://0.0.0.0:9092
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_PORT
+              value: "9092"
+          ports:
+            - containerPort: 9092
+---
+# Kafka Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+spec:
+  selector:
+    app: kafka
+  ports:
+    - protocol: TCP
+      port: 9092
+      targetPort: 9092
+---
+# Zookeeper Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,25 +119,12 @@ spec:
         app: zookeeper
     spec:
       containers:
-      - name: zookeeper
-        image: wurstmeister/zookeeper:3.4.6
-        ports:
-        - containerPort: 2181
-
+        - name: zookeeper
+          image: wurstmeister/zookeeper:3.4.6
+          ports:
+            - containerPort: 2181
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka
-spec:
-  selector:
-    app: kafka
-  ports:
-    - protocol: TCP
-      port: 9092
-      targetPort: 9092
-
----
+# Zookeeper Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -73,8 +136,8 @@ spec:
     - protocol: TCP
       port: 2181
       targetPort: 2181
-
 ---
+# Backend Command Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -90,12 +153,12 @@ spec:
         app: backend-command
     spec:
       containers:
-      - name: backend-command
-        image: backend-command:1.0.0
-        ports:
-        - containerPort: 8000
-
+        - name: backend-command
+          image: backend-command:1.0.0
+          ports:
+            - containerPort: 8000
 ---
+# Backend Command Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -104,11 +167,11 @@ spec:
   selector:
     app: backend-command
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
 ---
+# Backend Query Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -124,12 +187,17 @@ spec:
         app: backend-query
     spec:
       containers:
-      - name: backend-query
-        image: backend-query:1.0.0
-        ports:
-        - containerPort: 8000
-
+        - name: backend-query
+          image: backend-query:1.0.0
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:password@postgres:5432/mydatabase"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+          ports:
+            - containerPort: 8000
 ---
+# Backend Query Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -138,11 +206,11 @@ spec:
   selector:
     app: backend-query
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
 ---
+# Todo UI Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -158,12 +226,12 @@ spec:
         app: todo-ui
     spec:
       containers:
-      - name: todo-ui
-        image: todo-ui:1.0.0
-        ports:
-        - containerPort: 80
-
+        - name: todo-ui
+          image: todo-ui:1.0.0
+          ports:
+            - containerPort: 80
 ---
+# Todo UI Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -172,36 +240,42 @@ spec:
   selector:
     app: todo-ui
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-
+    - protocol: TCP
+      port: 80
+      targetPort: 80
 ---
+# Ingress Configuration
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: domain-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-  - host: backend-query.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: backend-query
-            port:
-              number: 80
-  - host: todo-ui.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: todo-ui
-            port:
-              number: 80
+    - host: todo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: todo-ui
+                port:
+                  number: 80
+          - path: /query(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend-query
+                port:
+                  number: 80
+          - path: /command(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend-command
+                port:
+                  number: 80
