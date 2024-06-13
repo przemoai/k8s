@@ -1,7 +1,8 @@
 import asyncio
+import json
 from contextlib import asynccontextmanager
 from enum import StrEnum
-from typing import Any
+from typing import Any, Dict
 
 from starlette.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
@@ -9,7 +10,19 @@ import uvicorn
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from fastapi import FastAPI
 from pydantic import BaseModel
-from models import Task_Pydantic, Task
+from tortoise import fields, models
+from tortoise.contrib.pydantic import pydantic_model_creator
+
+
+class Task(models.Model):
+    id = fields.IntField(pk=True)
+    description = fields.CharField(max_length=255)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+
+Task_Pydantic = pydantic_model_creator(Task, name="Task")
+TaskIn_Pydantic = pydantic_model_creator(Task, name="TaskIn", exclude_readonly=True)
+
 
 conf = {
     "bootstrap.servers": "localhost:9092",
@@ -22,9 +35,9 @@ TOPIC = "task-events"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    loop = asyncio.get_running_loop()
     consumer = Consumer(conf)
-    task = basic_consume_loop(consumer, [TOPIC])
-    asyncio.create_task(task)
+    loop.run_in_executor(None, basic_consume_loop, consumer, [TOPIC])
     yield
     consumer.close()
 
@@ -46,7 +59,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url="postgres://postgres:password@localhost:5432/mydatabase",
-    modules={"models": ["models"]},
+    modules={"models": ["__main__"]},  # Ensure models are referenced correctly
     generate_schemas=True,
     add_exception_handlers=True,
 )
@@ -65,32 +78,32 @@ class Action(StrEnum):
 
 class Event(BaseModel):
     action: Action
-    task: Task_Pydantic
+    task: TaskIn_Pydantic
 
 
-async def process_event(event: dict[str, Any]):
+async def process_event(event: Dict[str, Any]):
     if event["action"] == Action.ADD:
-        description = event["task"]
+        description = event["task"]["description"]
         task = Task(description=description)
         await task.save()
         return "saved"
 
     elif event["action"] == Action.REMOVE:
         id = event["task"]["id"]
-
         task = await Task.filter(id=id).first()
         if task:
             await task.delete()
         return "deleted"
 
-async def basic_consume_loop(consumer, topics):
+
+def basic_consume_loop(consumer, topics):
     consumer.subscribe(topics)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     try:
         while True:
-            await asyncio.sleep(0.1)
-            msg = consumer.poll(timeout=1)
-            print(".")
+            msg = consumer.poll(timeout=1.0)
             if msg is None:
                 continue
 
@@ -102,15 +115,15 @@ async def basic_consume_loop(consumer, topics):
             else:
                 print("New message!")
                 try:
-                    event = eval(msg.value().decode())
-                    x = await process_event(event)
-                except Exception:
-                    print("Error processing")
+                    event = json.loads(msg.value().decode())
+                    loop.run_until_complete(process_event(event))
+                except Exception as e:
+                    print(f"Error processing: {e}")
     except Exception as e:
         print(f"Error in consumer loop: {e}")
-
     finally:
         consumer.close()
+        loop.close()
 
 
 if __name__ == "__main__":

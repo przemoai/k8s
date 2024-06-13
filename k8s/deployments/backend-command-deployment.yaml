@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-command
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-command
+  template:
+    metadata:
+      labels:
+        app: backend-command
+    spec:
+      containers:
+      - name: backend-command
+        image: backend-command:1.0.0
+        ports:
+        - containerPort: 8000

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-query
+spec:
+  selector:
+    app: backend-query
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
