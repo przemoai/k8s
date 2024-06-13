@@ -60,6 +60,9 @@ kubectl apply -f k8s/todo-k8-dockerhub-images.yaml
 ![Services](images/k8s-snapshot-02.png)
 #### Ingress
 ![Ingress](images/k8s-snapshot-03.png)
+#### Network Policies
+![Network Policies](images/k8s-snapshot-04.png)
+
 
 Clean
 

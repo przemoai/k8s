@@ -58,6 +58,27 @@ spec:
       port: 5432
       targetPort: 5432
 ---
+# Network Policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-query
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: default
+          podSelector:
+            matchLabels:
+              app: backend-query
+---
 # Kafka Deployment
 apiVersion: apps/v1
 kind: Deployment
