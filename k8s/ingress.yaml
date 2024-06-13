@@ -6,13 +6,23 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: domain-service.local
+  - host: backend-query.local
     http:
       paths:
-      - path: /backend
+      - path: /
         pathType: Prefix
         backend:
           service:
-            name: domain-service
+            name: backend-query
+            port:
+              number: 80
+  - host: todo-ui.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: todo-ui
             port:
               number: 80
