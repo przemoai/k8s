@@ -11,6 +11,9 @@ Data Flow is organized with Kafka message queue system.
 
 ![Architecture](images/Architecture.png)
 
+## App UI
+![App UI](images/app-snapshot-01.png)
+
 ## Technology Stack
 
 - Angular 18
@@ -51,6 +54,12 @@ docker pull przemoai/todo-backend-command:1.0.0
 
 kubectl apply -f k8s/todo-k8-dockerhub-images.yaml
 ```
+#### Deployments
+![Deployments](images/k8s-snapshot-01.png)
+#### Services
+![Services](images/k8s-snapshot-02.png)
+#### Ingress
+![Ingress](images/k8s-snapshot-03.png)
 
 Clean
 
