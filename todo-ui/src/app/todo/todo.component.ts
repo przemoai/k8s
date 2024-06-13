@@ -25,14 +25,14 @@ export class TodoComponent {
   }
 
   loadTasks() {
-    this.http.get<Task[]>('http://backend-query.deafult.svc.cluster.local/tasks/').subscribe(data => {
+    this.http.get<Task[]>('http://todo.local/query/tasks/').subscribe(data => {
       this.tasks = data;
     });
   }
 
   addTask() {
     if (this.newTask.trim()) {
-      this.http.post('http://backend-command.deafult.svc.cluster.local/tasks/', {description: this.newTask}).subscribe(() => {
+      this.http.post('http://todo.local/command/tasks/', {description: this.newTask}).subscribe(() => {
         this.loadTasks();
         this.newTask = '';
       });
@@ -40,7 +40,7 @@ export class TodoComponent {
   }
 
   removeTask(task: Task) {
-    this.http.delete('http://backend-command.deafult.svc.cluster.local/tasks/',{body:task}).subscribe(() => {
+    this.http.delete('http://todo.local/command/tasks/',{body:task}).subscribe(() => {
       this.loadTasks();
     });
   }

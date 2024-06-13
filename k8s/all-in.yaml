@@ -271,8 +271,8 @@ spec:
                 name: backend-command
                 port:
                   number: 80
-          - path: /
-            pathType: Prefix
+          - path: /(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: todo-ui

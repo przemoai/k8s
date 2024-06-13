@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
-from models import Task_Pydantic, Task
+from src.models import Task_Pydantic, Task
 
 
 
@@ -36,18 +36,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-origins = [
-    "http://localhost:4200",
-    "http://todo.local:80",
-    "http://todo.local",
-    "http://todo-ui.default.svc.cluster.local"
-]
+origins = ["http://todo.local"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET,POST,DELETE"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 

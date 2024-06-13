@@ -15,17 +15,15 @@ TOPIC = "task-events"
 app = FastAPI()
 
 origins = [
-    "http://localhost:4200",
-    "http://todo.local:80",
-    "http://todo.local",
-    "http://todo-ui.default.svc.cluster.local"
+    "http://todo.local"
 ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET,POST,DELETE"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 
