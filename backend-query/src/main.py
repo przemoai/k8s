@@ -10,7 +10,7 @@ import uvicorn
 from confluent_kafka import Consumer, KafkaException, KafkaError
 from fastapi import FastAPI
 from pydantic import BaseModel
-from .model import TaskIn_Pydantic, Task, Task_Pydantic
+from .model import Task, TaskIn_Pydantic, Task_Pydantic
 
 conf = {
     "bootstrap.servers": "kafka-cluster.default.svc.cluster.local:9092",
@@ -38,16 +38,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET,POST,DELETE"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
-
 
 register_tortoise(
     app,
-    db_url="postgres://postgres.default.svc.cluster.local:5432/mydatabase",
-    modules={"models": ["__main__"]},  # Ensure models are referenced correctly
+    db_url="postgres://postgres:password@postgres.default.svc.cluster.local:5432/mydatabase",
+    modules={"models": ["app.model"]},
     generate_schemas=True,
     add_exception_handlers=True,
 )
@@ -75,7 +73,6 @@ async def process_event(event: Dict[str, Any]):
         task = Task(description=description)
         await task.save()
         return "saved"
-
     elif event["action"] == Action.REMOVE:
         id = event["task"]["id"]
         task = await Task.filter(id=id).first()
@@ -88,13 +85,11 @@ def basic_consume_loop(consumer, topics):
     consumer.subscribe(topics)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     try:
         while True:
             msg = consumer.poll(timeout=1.0)
             if msg is None:
                 continue
-
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
                     print("End of partition")
