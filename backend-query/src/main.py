@@ -14,8 +14,7 @@ from .model import Task, TaskIn_Pydantic, Task_Pydantic
 
 conf = {
     "bootstrap.servers": "kafka-cluster.default.svc.cluster.local:9092",
-    "group.id": "task-group",
-    "auto.offset.reset": "earliest",
+    "group.id": "task-group"
 }
 
 TOPIC = "task-events"
@@ -45,7 +44,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url="postgres://postgres:password@postgres.default.svc.cluster.local:5432/mydatabase",
-    modules={"models": ["app.model"]},
+    modules={"models": ["app.src.model"]},
     generate_schemas=True,
     add_exception_handlers=True,
 )
