@@ -12,6 +12,7 @@ Data Flow is organized with Kafka message queue system.
 ![Architecture](images/Architecture.png)
 
 ## App UI
+
 ![App UI](images/app-snapshot-01.png)
 
 ## Technology Stack
@@ -54,15 +55,24 @@ docker pull przemoai/todo-backend-command:1.0.0
 
 kubectl apply -f k8s/todo-k8-dockerhub-images.yaml
 ```
-#### Deployments
-![Deployments](images/k8s-snapshot-01.png)
-#### Services
-![Services](images/k8s-snapshot-02.png)
-#### Ingress
-![Ingress](images/k8s-snapshot-03.png)
-#### Network Policies
-![Network Policies](images/k8s-snapshot-04.png)
 
+### [http://todo.local](http://todo.local)
+
+#### Deployments
+
+![Deployments](images/k8s-snapshot-01.png)
+
+#### Services
+
+![Services](images/k8s-snapshot-02.png)
+
+#### Ingress
+
+![Ingress](images/k8s-snapshot-03.png)
+
+#### Network Policies
+
+![Network Policies](images/k8s-snapshot-04.png)
 
 Clean
 
@@ -85,8 +95,6 @@ docker image pull wurstmeister/zookeeper:3.4.6
 docker image pull wurstmeister/kafka:2.12-2.5.0
 docker image pull postgres:13
 ```
-
-### [http://Todo.local](http://todo.local)
 
 2. Upload docker images to minikube
 
